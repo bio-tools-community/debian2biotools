@@ -1,0 +1,30 @@
+#!/bin/bash -e
+
+pathToDebian=$1
+
+USAGE=<<EOUSAGE
+debian2edam <path to 'debian' directory>
+EOUSAGE
+
+if [ ! -d "$pathToDebian" ]; then
+	echo "$USAGE"
+	echo "Could not find directory 'pathToDebian'"
+	exit -1
+fi
+cd $(dirname "$pathToDebian")
+
+edamfile="debian/upstream/edam"
+if [ ! -r "$edamfile" ]; then
+	echo "$USAGE"
+	echo "Could not access file '$edamfile' from $(pwd)"
+	exit -1
+fi
+
+package=$(dpkg-parsechangelog |grep ^Source | sed -e 's/`^Source: //' )
+version=$(dpkg-parsechangelog |grep ^Version | cut -f2  -d\  | sed -e 's/-[^-][^-]*//' )
+
+echo "Package $package"
+echo "Version $version"
+
+
+
