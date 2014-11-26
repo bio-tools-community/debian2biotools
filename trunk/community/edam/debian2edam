@@ -73,32 +73,47 @@ sourcepackage=$(dpkg-parsechangelog |grep ^Source | sed -e 's/`^Source: //' )
 version=$(dpkg-parsechangelog |grep ^Version | cut -f2  -d\  | sed -e 's/-[^-][^-]*//' )
 
 declare -a descriptions
-#cat debian/control
+declare -a packages
 
-grep "^Package:" debian/control | \
+if [ -n "$debug" ]; then cat debian/control; fi
+
 while read desc; do
 	d=$(echo "$desc"|sed -e 's/^[^:]*: *//')
 	echo Package: $d
+	#packages="$d"
+	#packages[1]="$d"
 	packages[${#packages[*]}]="$d"
-done
+done < <(grep "^Package:" debian/control )
 
-grep "^Description:" debian/control | \
 while read desc; do
 	d=$(echo "$desc"|sed -e 's/^[^:]*: *//')
 	echo Description: $d
 	descriptions[${#descriptions[*]}]="$d"
-done
+	#descriptions[1]="$d"
+	#descriptions="$d"
+done < <(grep "^Description:" debian/control )
 
-if [ ${#packagesp[*]} != ${#descriptions[*]} ]; then
+#echo "DESCRIPTIONS: ${descriptions[*]}"
+#echo "PACKAGES: ${packages[*]}"
+#echo "DESCRIPTIONS: $descriptions}"
+#echo "PACKAGES: $packages"
+
+if [ ${#packages[*]} != ${#descriptions[*]} ]; then
 	echo "E: Internal error - expected same number of packages (${#packagesp[*]}) as for their descriptions (${#descriptions[*]})" | STDERR
 	exit -1
 fi
 
-for packageno in $(seq 1 ${#descriptions[*]})
-do
-	echo Packages: ${packages[$packageno]}
-	echo Descriptions: ${descriptions[$packageno]}
-done
+(
+if [ -n "$verbose" ]; then
+	for packageno in $(seq 0 ${#descriptions[*]})
+	do
+		echo "# $packageno"
+		echo Packages[$packageno]: ${packages[$packageno]}
+		echo Descriptions[$packageno]: ${descriptions[$packageno]}
+	done
+fi
+) | STDERR
+
 prevstate="start";
 previndent=0
 currentscope=""
@@ -130,7 +145,7 @@ do
 	val=$(echo    "$line"|sed -e 's/^\( *\)\([^ :]\+\): *\([^ ]\+\).*$/\3/')
 
 	if echo "$val" | grep -q : ; then
-		echo "W: found colon in ID of line '$line' - transscribing to underscore"|STDERR
+		echo "W: found colon in ID of line '$line' - transscribing to underscore" | STDERR
 		val=$(echo "$val"|tr ":" "_")
 	fi
 
@@ -157,13 +172,14 @@ do
 			echo "I: treatment of multiple scopes not yet implemented" | STDERR
 		else
 			echo "("
+			# Some decent comparison of package names with scope is not implemented
 			level=$((level+1))
 			echoindent
 			echo "Package $resourcename"
 			echoindent
 			echo "Version $version"
 			echoindent
-			echo "Description ${descriptions[1]}"
+			echo "Description ${descriptions[0]}"
 			echoindent
 			echo "Topic $currenttopic"
 			openscope=1
