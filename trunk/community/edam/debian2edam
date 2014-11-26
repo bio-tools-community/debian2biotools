@@ -1,30 +1,219 @@
 #!/bin/bash -e
 
-pathToDebian=$1
 
+# A routine to facilitate the output to STDERR instead of the default STDIN
+function STDERR () {
+	cat - 1>&2
+}
+
+function echoindent () {
+	for i in $(seq 1 $1)
+	do
+		echo -n " "
+	done
+}
+
+# helper to properly close an open paranthesis
+function closeParenthesis () {
+			level=$((level-1))
+			echoindent $level
+			echo -n ")"
+			if [ -n "$1" ]; then
+				echo "# $1"
+			else
+				echo
+			fi
+}
+
+# Key argument indicating the debian directory from which to retrieve all the
+# information
+pathToDebian=$1
+#verbose="yes"
+verbose=""
+
+# Variable keeping usage information
 USAGE=<<EOUSAGE
 debian2edam <path to 'debian' directory>
 EOUSAGE
 
-if [ ! -d "$pathToDebian" ]; then
-	echo "$USAGE"
-	echo "Could not find directory 'pathToDebian'"
+filename=$(basename "$pathToDebian")
+if [ "edam" = "$filename" ]; then
+	pathToDebian=$(dirname "$pathToDebian") # upstream
+	pathToDebian=$(dirname "$pathToDebian") # debian
+fi
+
+if [ -z "$pathToDebian" ]; then
+	echo "$USAGE" | STDERR
+	echo "E: Please specify debian directory in which to find EDAM annotation." | STDERR
 	exit -1
 fi
+
+if [ ! -d "$pathToDebian" ]; then
+	echo "$USAGE" | STDERR
+	echo "E: Could not find directory '$pathToDebian'" | STDERR
+	exit -1
+fi
+
+if [ ! -r "$pathToDebian/changelog" ]; then
+	echo "$USAGE" | STDERR
+	echo "E: Could not find a changelog file expected at '$pathToDebian/changelog'" | STDERR
+	exit -1
+fi
+
 cd $(dirname "$pathToDebian")
 
 edamfile="debian/upstream/edam"
 if [ ! -r "$edamfile" ]; then
-	echo "$USAGE"
-	echo "Could not access file '$edamfile' from $(pwd)"
+	echo "$USAGE" | STDERR
+	echo "E: Could not access file '$edamfile' from $(pwd)" | STDERR
 	exit -1
 fi
 
-package=$(dpkg-parsechangelog |grep ^Source | sed -e 's/`^Source: //' )
+sourcepackage=$(dpkg-parsechangelog |grep ^Source | sed -e 's/`^Source: //' )
 version=$(dpkg-parsechangelog |grep ^Version | cut -f2  -d\  | sed -e 's/-[^-][^-]*//' )
 
-echo "Package $package"
-echo "Version $version"
+declare -a descriptions
+#cat debian/control
 
+grep "^Package:" debian/control | \
+while read desc; do
+	d=$(echo "$desc"|sed -e 's/^[^:]*: *//')
+	echo Package: $d
+	packages[${#packages[*]}]="$d"
+done
 
+grep "^Description:" debian/control | \
+while read desc; do
+	d=$(echo "$desc"|sed -e 's/^[^:]*: *//')
+	echo Description: $d
+	descriptions[${#descriptions[*]}]="$d"
+done
 
+if [ ${#packagesp[*]} != ${#descriptions[*]} ]; then
+	echo "E: Internal error - expected same number of packages (${#packagesp[*]}) as for their descriptions (${#descriptions[*]})" | STDERR
+	exit -1
+fi
+
+for packageno in $(seq 1 ${#descriptions[*]})
+do
+	echo Packages: ${packages[$packageno]}
+	echo Descriptions: ${descriptions[$packageno]}
+done
+prevstate="start";
+previndent=0
+currentscope=""
+currenttopic=""
+opentopic=0
+openfunction=0
+openscope=0
+indentlen=0
+level=0
+
+# Core part of the program
+# It reads every line of the EDAM file (see end of loop for the redirection)
+# and decides what to print to STDOUT.
+
+while IFS='' read -r line 
+do
+	if [ -z "$line" ]; then
+		echo "Read empty line"
+		continue
+	fi
+
+	if [ -n "$verbose" ]; then
+		echo "line: '$line'" | STDERR
+	fi
+
+	# retrieve different parts of the description
+	blanks=$(echo "$line"|sed -e 's/^\( *\)\([^ :]\+\): *\([^ ]\+\).*$/\1/')
+	type=$(echo   "$line"|sed -e 's/^\( *\)\([^ :]\+\): *\([^ ]\+\).*$/\2/')
+	val=$(echo    "$line"|sed -e 's/^\( *\)\([^ :]\+\): *\([^ ]\+\).*$/\3/')
+
+	if echo "$val" | grep -q : ; then
+		echo "W: found colon in ID of line '$line' - transscribing to underscore"|STDERR
+		val=$(echo "$val"|tr ":" "_")
+	fi
+
+	#echo "Indent='$blanks'"
+	#echo "Indentlength='$indentlen'"
+	#echo "Type='$type'"
+	#echo "Val='$val'"
+
+	if [  -n "$currentscope" -a "*" != "$currentscope" -a "summary" != "$currentscope" -a "scope" != "$type" ]; then
+		echo "I: Wrong scope ($currentscope) - ignored '$line'" | STDERR
+		continue
+	fi
+	indentlen=${#blanks}
+
+	if [ "scope" = "$type" ]; then
+		if [ $openfunction -gt 0 ]; then closeParenthesis "openfunction($openfunction) in scope"; fi
+		currentscope="$val"
+		resourcename=$sourcepackage
+		if [ "*"!=$val -a "summary"!="$val" ];then
+			resourcename=$val
+		fi
+
+		if [ "summary" != "$val" -a "*" != "$val" ]; then
+			echo "I: treatment of multiple scopes not yet implemented" | STDERR
+		else
+			echo "("
+			level=$((level+1))
+			echoindent
+			echo "Package $resourcename"
+			echoindent
+			echo "Version $version"
+			echoindent
+			echo "Description ${descriptions[1]}"
+			echoindent
+			echo "Topic $currenttopic"
+			openscope=1
+		fi
+	elif [ "topic" = "$type" ]; then
+		if [ $openfunction -gt 0 ]; then closeParenthesis "openfunction($openfunction) in topic"; openfunction=0; fi
+		if [ $openscope -gt 0 ]; then closeParenthesis "openscope($openscope) after loop"; openscope=0; fi
+		if [ "start" != "$prevstate" ]; then
+			closeParenthesis "topic with prior state - weird"
+		fi
+		currenttopic="$val"
+		# at some laterimplementation point, bits generated here would be cached and then distributed
+		# to various lower-level scopes
+	elif [ "function" = "$type" ]; then
+		if [ $openfunction -gt 0 ]; then
+			closeParenthesis "openfunction($openfunction) in function"
+			openfunction=0
+		fi
+		echoindent $level
+		echo "(function";
+		level=$((level+1))
+		openfunction=1
+	elif [ "input" = "$type" -o "output" = "$type" ]; then
+		echoindent $level
+		echo "($type $val)"
+	else
+		echo "W: unknown type '$type' - ignored" | STDERR
+	fi
+	prevstate=$type
+	#echo "indentlen='$indentlen'"
+done < $edamfile 
+
+if [ $openfunction -gt 0 ]; then
+	closeParenthesis "openfunction($openfunction) after loop"
+	openfunction=0
+fi
+
+if [ $openscope -gt 0 ]; then
+	#echo "I: treatment of multiple scopes not yet implemented"|STDERR
+	closeParenthesis "openscope($openscope) after loop"
+	openscope=0
+fi
+
+#echo "indentlen='$indentlen'" | STDERR
+
+if [ $opentopic -gt 0 ]; then
+	opentopic=0
+fi
+
+#for i in $(seq $(($indentlen-$openfunction-$openscope-$opentopic)) -1 1)
+#do
+#	closeParenthesis "indent $i"
+#done
