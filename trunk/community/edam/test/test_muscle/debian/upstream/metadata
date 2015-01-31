@@ -1,0 +1,23 @@
+Reference:
+ - Author: Robert C. Edgar
+   Title: "MUSCLE: multiple sequence alignment with high accuracy and high throughput"
+   Journal: Nucleic Acids Research
+   Year: 2004
+   Volume: 32
+   Number: 5
+   Pages: 1792-1797
+   DOI: 10.1093/nar/gkh340
+   PMID: 15034147
+   URL: http://nar.oxfordjournals.org/content/32/5/1792
+   eprint: http://nar.oxfordjournals.org/content/32/5/1792.full.pdf+html
+ - Author: Robert C. Edgar
+   Title: "MUSCLE: a multiple sequence alignment method with reduced time and space complexity"
+   Journal: BMC Bioinformatics
+   Year: 2004
+   Volume: 19
+   Number: 5
+   Pages: 113
+   DOI: 10.1186/1471-2105-5-113
+   PMID: 15318951
+   URL: http://www.biomedcentral.com/1471-2105/5/113
+   eprint: http://www.biomedcentral.com/content/pdf/1471-2105-5-113.pdf

@@ -1,0 +1,9 @@
+topic: topic_0182 Sequence alignment
+scope: summary
+ function: operation_0492 Multiple Sequence Alignment
+ input: data_2044 Sequence
+ input: format_1929 FASTA
+ output: data_1916 Alignment
+ output: format_1984 FASTA-aln
+ output: format_1982 Clustalw format
+ output: format_1997 Phylip format

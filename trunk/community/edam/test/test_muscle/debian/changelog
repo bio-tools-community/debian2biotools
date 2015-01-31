@@ -1,0 +1,110 @@
+muscle (1:3.8.31-2) UNRELEASED; urgency=low
+
+  * debian/upstream: Added citations
+  * debian/control:
+     - Fixed Vcs-Svn
+     - Standards-Version: 3.9.3 (no changes needed)
+
+ -- Andreas Tille <tille@debian.org>  Sat, 05 May 2012 08:09:12 +0200
+
+muscle (1:3.8.31-1) unstable; urgency=low
+
+  [ Charles Plessy ]
+  * New upstream release (Closes: #643443).
+  * debian/control: Enhances: t-coffee.
+  * Changed the doc-base section according to the new policy.
+  * Updated my email address.
+  * Updated debian/watch to new version scheme and download location.
+  * Repack usptream archive and implemented a get-orig-source target
+    (debian/rules, debian/README.source, debian/copyright).
+  * Use Debhelper 8 (debian/control, debian/compat).
+  * Build directly from debian/rules targets.
+  * Corrected VCS URLs in debian/control.
+  * Conforms to Debian Policy 3.9.2 (debian/control, no changes needed).
+
+  [ David Paleino ]
+  * removed myself from Uploaders (debian/control).
+
+ -- Charles Plessy <plessy@debian.org>  Sun, 13 Nov 2011 18:38:06 +0900
+
+muscle (3.70+fix1-2) unstable; urgency=low
+
+  * debian/control Conflicts: and Replaces: muscle-doc (Closes: #465607)
+
+ -- Charles Plessy <charles-debian-nospam@plessy.org>  Thu, 14 Feb 2008 10:44:17 +0900
+
+muscle (3.70+fix1-1) unstable; urgency=low
+
+  [ Charles Plessy ]
+  * New upstream version, buildable with GCC 4.3 (Closes: #462707)
+    The version number was not increased upstream when the sources were
+    changed. We name this new version in Debian "3.70+fix1".
+  * Updated manual page.
+  * Converted the source package to CDBS, dropped Makefile patch.
+  * Fused muscle and muscle-doc.
+
+  [ Nelson A. de Oliveira ]
+  * Fixed watch file (Closes: #462827)
+
+ -- Charles Plessy <charles-debian-nospam@plessy.org>  Wed, 06 Feb 2008 12:04:31 +0900
+
+muscle (3.70-1) unstable; urgency=low
+
+  [ Charles Plessy ]
+  * New upstream release (bugfixes plus undocumented new features).
+  * debian/control:
+    - Add Subversion repository.
+    - Swiched to quilt.
+    - Enhaces: seaview because SeaView can call muscle to re-align sequences.
+    - Moved the Homepage: field out from the package's description.
+    - Using debhelper 5.
+    - Removed [Biology] from package description as there are Debtags now.
+    - Checked that muscle conforms to Policy 3.7.3.
+    - Updated Steffen's email address.
+  * Handling nostrip build option (policy 10.1) (Closes: #437599).
+  * Updated manpage.
+  * debian/copyright made machine-readable.
+
+  [ Nelson A. de Oliveira ]
+  * Added watch file.
+
+  [ David Paleino ]
+  * debian/manpage.xml moved to debian/muscle.1.xml
+  * debian/muscle.1 added - statically built
+  * debian/manpages removed - passing arguments to dh_installman
+    directly
+  * debian/control:
+    - B-D updated (see above)
+    - added myself to Uploaders
+    - moved XS-Vcs-* to Vcs-*
+  * debian/rules:
+    - manpages statically built
+    - minor changes
+
+ -- Charles Plessy <charles-debian-nospam@plessy.org>  Sat, 12 Jan 2008 16:55:48 +0900
+
+muscle (3.60-1) unstable; urgency=low
+
+  * New upstram release (Closes: Bug#361742).
+  * New maintainers email addresses. 
+
+ -- Charles Plessy <charles-debian-nospam@plessy.org>  Sat,  5 Aug 2006 09:57:27 +0900
+
+muscle (3.52-2) unstable; urgency=low
+
+  * Added missing build dependencies (Closes: Bug#287684).
+
+ -- Steffen Moeller <moeller@pzr.uni-rostock.de>  Wed, 29 Dec 2004 21:50:47 +0200 
+
+muscle (3.52-1) unstable; urgency=low
+
+  * New upstream version.
+  * Fix build on arch other than Pentium (Closes: Bug#285000).
+
+ -- Steffen Moeller <moeller@pzr.uni-rostock.de>  Sun, 18 Dec 2004 00:06:00 +0200
+
+muscle (3.51-1) unstable; urgency=low
+
+  * Initial Release (Closes: Bug#280411).
+
+ -- Steffen Moeller <moeller@pzr.uni-rostock.de>  Sun, 19 Sep 2004 00:51:19 +0200

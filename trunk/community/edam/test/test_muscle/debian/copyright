@@ -1,0 +1,24 @@
+Format: http://dep.debian.net/deps/dep5/
+Source: http://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_src.tar.gz
+Comment: This release contains a potentially sourceless binary file, muscle21, that was removed.
+
+Files: *
+Copyright: © Robert C. Edgar "Bob" <muscle@drive5.com>
+License: PD-dedication
+ MUSCLE is public domain software
+ The MUSCLE software, including object and source code, is hereby donated
+ to the public domain.
+ .
+ Disclaimer of warranty
+ THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+ EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+Files: debian/*
+Copyright: © 2004 Steffen Moeller <steffen_moeller@gmx.de>
+           © 2007 Nelson A. de Oliveira <naoliv@debian.org>
+           © 2007 David Paleino <d.paleino@gmail.com>
+           © 2006-2008 Charles Plessy <charles-debian-nospam@plessy.org>
+License: PD-dedication
+ Please treat this work as if it were in public domain.
+
