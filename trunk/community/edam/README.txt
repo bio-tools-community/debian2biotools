@@ -10,3 +10,4 @@ a format compatible with YAML [2].
 
 [1] http://edamontology.org/
 [2] http://www.yaml.org/
+[3] https://elixir-registry.cbs.dtu.dk
