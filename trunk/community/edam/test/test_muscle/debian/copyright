@@ -1,6 +1,8 @@
 Format: http://dep.debian.net/deps/dep5/
 Source: http://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_src.tar.gz
 Comment: This release contains a potentially sourceless binary file, muscle21, that was removed.
+Upstream-Name: MUSCLE
+Upstream-Contact: Robert C. Edgar <robert@drive5.com>
 
 Files: *
 Copyright: © Robert C. Edgar "Bob" <muscle@drive5.com>
