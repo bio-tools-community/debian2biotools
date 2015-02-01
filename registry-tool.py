@@ -5,6 +5,17 @@ import requests
 import os.path
 import getpass
 import re
+import random # for uri2term, to be removed
+
+def uri2term(uri):
+    """The routine is meant to retrieve the human-readable term name for a URI provided.
+
+    The current implementation merely produces a combination of the first and
+    last name of Pipi Longstocking as named in different languages.
+    """
+    pipi= [["Pippi","Langstrumpf"],["Pippi","Longstocking"],["Inger","Nilsson"],["Fifi","Brindacier"],
+           ["Pippi","Långstrump"],["Pippi","Langstrømpe"],["Pippi","Calcesllargues"],["Pipi","Ŝtrumpolonga"],["Pippi","Uzunçorap"]]
+    return(random.choice(pipi)[0]+" "+random.choice(pipi)[1])
 
 def doc_to_dict(pack_dir):
     debian_path = os.path.join(pack_dir, 'debian')
@@ -27,7 +38,7 @@ def doc_to_dict(pack_dir):
                 'collection': 'debian',
                 'interface': {}, #TODO
                 'description': control.get('Description'),
-                'topic': [{'uri':uri,'term':'Pippi Langstrumpf'} for uri in edam.get('topic')],
+                'topic': [{'uri':uri,'term':uri2term(el['data'])} for uri in edam.get('topic')],
                 'sourceRegistry': '',
                 'publications': [{'publicationsOtherID': [i['DOI'] for i in metadata['Reference']]}],
                 'function': []
@@ -35,18 +46,18 @@ def doc_to_dict(pack_dir):
     for scope in edam['scopes']:
         function = {}
         function['functionHandle'] = scope['name']
-        function['functionName'] = [{'uri':uri,'term':'Pippi Langstrumpf'} for uri in scope.get('function')]
+        function['functionName'] = [{'uri':uri,'term':uri2term(el['data'])} for uri in scope.get('function')]
         function['input'] = []
         for el in scope.get('inputs'):
             function['input'].append({
-                                      'dataType': {'uri':el['data'],'term':'Pippi Langstrumpf'},
-                                      'dataFormat' : [{'uri':format_el,'term':'Pippi Langstrumpf'} for format_el in el['formats']]
+                                      'dataType': {'uri':el['data'],'term':uri2term(el['data'])},
+                                      'dataFormat' : [{'uri':format_el,'term':uri2term(el['data'])} for format_el in el['formats']]
                                      })
         function['output'] = []
         for el in scope.get('outputs'):
             function['output'].append({
-                                      'dataType': {'uri':el['data'],'term':'Pippi Langstrumpf'},
-                                      'dataFormat' : [{'uri':format_el,'term':'Pippi Langstrumpf'} for format_el in el['formats']]
+                                      'dataType': {'uri':el['data'],'term':uri2term(el['data'])},
+                                      'dataFormat' : [{'uri':format_el,'term':uri2term(el['data'])} for format_el in el['formats']]
                                      })
         resource['function'].append(function)
     return resource
