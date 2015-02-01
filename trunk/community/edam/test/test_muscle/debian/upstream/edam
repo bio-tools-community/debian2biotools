@@ -6,7 +6,7 @@ scopes:
      - operation_0492 #Multiple Sequence Alignment
     inputs: 
      - data:   data_2044 #Sequence
-       formats: format_1929 #FASTA
+       formats: [format_1929] #FASTA
     outputs:
      - data: data_1916 #Alignment
        formats: 
