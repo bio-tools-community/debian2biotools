@@ -23,12 +23,19 @@ level=0
 function closeParenthesis () {
 	level=$(($level-1))
 	echoindent $level
-	echo -n ")"
+	echo -n "}"
 	if [ -n "$1" ]; then
 		echo "# $1"
 	else
 		echo
 	fi
+}
+
+
+function echoTerm(){
+        level=$(($level-1))
+        echoindent $level
+        echo "{\"uri\": \"$1\", \"term\": \"Pippi Langstrumpf\"}"
 }
 
 # Key argument indicating the debian directory from which to retrieve all the
@@ -180,17 +187,17 @@ do
 		if [ "summary" != "$val" -a "*" != "$val" ]; then
 			echo "I: treatment of multiple scopes not yet implemented" | STDERR
 		else
-			echo "("
+			echo "{"
 			# Some decent comparison of package names with scope is not implemented
 			level=$((level+1))
 			echoindent
 			echo "Package $resourcename"
 			echoindent
-			echo "Version $version"
+			echo "\"version\": \"$version\","
 			echoindent
-			echo "Description ${descriptions[0]}"
+			echo "\"description\": \"${descriptions[0]}\","
 			echoindent
-			echo "Topic $currenttopic"
+			echo "\"topic\": \"{$currenttopic}\""
 			openscope=1
 		fi
 	elif [ "topic" = "$type" ]; then
@@ -208,10 +215,18 @@ do
 			openfunction=0
 		fi
 		echoindent $level
-		echo "(function $val";
+		echo "{function: [ { \"functionName\":  ["
+                echoTerm $val
+                echo "] }],"
 		level=$((level+1))
 		openfunction=1
 	elif [ "input" = "$type" -o "output" = "$type" ]; then
+                if [ $prevstate = $type ]; then
+                        echo "},{"
+                fi
+                if [ $prevstate = 'function' ]; then
+                        echo "\"$type\": [{"
+                fi
 		echoindent $level
 		echo "($type $val)"
 	else
