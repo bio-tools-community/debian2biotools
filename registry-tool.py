@@ -15,7 +15,8 @@ EDAM_NS = {'owl' : 'http://www.w3.org/2002/07/owl#',
            'rdfs':"http://www.w3.org/2000/01/rdf-schema#",
            'oboInOwl': "http://www.geneontology.org/formats/oboInOwl#"}
 
-EDAM_DOC = doc = etree.parse("/home/hmenager/edamontology/EDAM_1.13_dev.owl")
+#EDAM_DOC = doc = etree.parse("/home/hmenager/edamontology/EDAM_1.13_dev.owl")
+EDAM_DOC = doc = etree.parse("EDAM.owl")
 
 def check_id(label, axis):
     xpath_query = "//owl:Class[translate(rdfs:label/text(),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')=translate('" + label\
@@ -46,18 +47,43 @@ def doc_to_dict(pack_dir):
     m = re.match('^([0-9]+:)?(.*)-[^-]+$', version_debian)
     version_upstream = m.groups()[m.lastindex-1]
     edam = yaml.load(open(edam_path))
-    metadata = yaml.load(open(metadata_path))
     resource = {'name': control.get('Source'),
                 'homepage': control.get('Homepage'),
                 'version': version_debian,
-                'collection': 'debian',
+                'collection': 'DebianMed',
                 'interface': {}, #TODO
                 'description': control.get('Description'),
                 'topic': [{'uri':check_id(topic_label,'topic')} for topic_label in edam.get('topic')],
                 'sourceRegistry': '',
-                'publications': [{'publicationsOtherID': [i['DOI'] for i in metadata['Reference']]}],
                 'function': []
                }
+    metadata = yaml.load(open(metadata_path))
+    resource['publications'] = {}
+
+    try:
+        print "@@@@@@@@@@@@@@@"
+	print metadata['Reference']['DOI']
+        print "@@@@@@@@@@@@@@@"
+        resource['publications']['publicationsPrimaryID'] = metadata['Reference']['DOI'],
+        print "@@@@@@@@@@@@@@@"
+        print resource['publications']['publicationsPrimaryID']
+        print "@@@@@@@@@@@@@@@"
+    except TypeError:
+        print "TypeError 1"
+        try:
+            resource['publications']['publicationsPrimaryID'] = metadata['Reference'][0]['DOI'],
+	    if len( metadata['Reference'])>1:
+                resource['publications']['publicationsOtherID'] = []
+                for pos in range(1,len(metadata['Reference'])):
+                    try:
+                        resource['publications']['publicationsOtherID'] = metadata['Reference'][pos]['DOI']
+                    except KeyError:
+                        print "No DOI at pos %d\n" % pos
+        except KeyError:
+            resource['publications']['publicationsPrimaryID'] = "None"
+    except KeyError:
+        resource['publications']['publicationsPrimaryID'] = "None"
+
     for scope in edam['scopes']:
         function = {}
         function['functionHandle'] = scope['name']
