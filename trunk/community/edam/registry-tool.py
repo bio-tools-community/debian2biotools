@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import json
 import yaml
 import argparse
@@ -5,18 +6,33 @@ import requests
 import os.path
 import getpass
 import re
-import random # for uri2term, to be removed
 
-def uri2term(uri):
-    """The routine is meant to retrieve the human-readable term name for a URI provided.
+from lxml import etree
 
-    The current implementation merely produces a combination of the first and
-    last name of Pipi Longstocking as named in different languages.
-    """
-    pipi= [["Pippi","Langstrumpf"],["Pippi","Longstocking"],["Inger","Nilsson"],["Fifi","Brindacier"],
-           ["Pippi","Långstrump"],["Pippi","Langstrømpe"],["Pippi","Calcesllargues"],["Pipi","Ŝtrumpolonga"],["Pippi","Uzunçorap"]]
-    return(random.choice(pipi)[0]+" "+random.choice(pipi)[1])
+#parsing and declaring namespaces...
+EDAM_NS = {'owl' : 'http://www.w3.org/2002/07/owl#',
+           'rdf':"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+           'rdfs':"http://www.w3.org/2000/01/rdf-schema#",
+           'oboInOwl': "http://www.geneontology.org/formats/oboInOwl#"}
 
+EDAM_DOC = doc = etree.parse("/home/hmenager/edamontology/EDAM_1.13_dev.owl")
+
+def check_id(label, axis):
+    xpath_query = "//owl:Class[translate(rdfs:label/text(),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')=translate('" + label\
+          + "','abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ') and starts-with(@rdf:about, 'http://edamontology.org/" + axis + "')]/@rdf:about"
+    matching_terms = EDAM_DOC.xpath(xpath_query, namespaces=EDAM_NS)
+    if len(matching_terms)==0:
+        print("ERROR - No matching " + axis + " term for label " + label + "!")
+        print(xpath_query)
+    elif len(matching_terms)>1:
+        print("ERROR - More than one " + axis + " term for label " + label + "!")
+    else:
+        term_id = matching_terms[0]
+        if len(EDAM_DOC.xpath("//owl:Class[@rdf:about='"+ term_id +"' and owl:deprecated='true']", namespaces=EDAM_NS))>0:
+            print("ERROR - Term " + term_id + " term for label " + label + " is deprecated!")
+        else:
+            return term_id            
+        
 def doc_to_dict(pack_dir):
     debian_path = os.path.join(pack_dir, 'debian')
     control_path = os.path.join(debian_path, 'control')
@@ -31,14 +47,13 @@ def doc_to_dict(pack_dir):
     version_upstream = m.groups()[m.lastindex-1]
     edam = yaml.load(open(edam_path))
     metadata = yaml.load(open(metadata_path))
-
     resource = {'name': control.get('Source'),
                 'homepage': control.get('Homepage'),
                 'version': version_debian,
                 'collection': 'debian',
                 'interface': {}, #TODO
                 'description': control.get('Description'),
-                'topic': [{'uri':uri,'term':uri2term(el['data'])} for uri in edam.get('topic')],
+                'topic': [{'uri':check_id(topic_label,'topic')} for topic_label in edam.get('topic')],
                 'sourceRegistry': '',
                 'publications': [{'publicationsOtherID': [i['DOI'] for i in metadata['Reference']]}],
                 'function': []
@@ -46,68 +61,32 @@ def doc_to_dict(pack_dir):
     for scope in edam['scopes']:
         function = {}
         function['functionHandle'] = scope['name']
-        function['functionName'] = [{'uri':uri,'term':uri2term(el['data'])} for uri in scope.get('function')]
+        function['functionName'] = [{'uri':check_id(function_label,'operation')} for function_label in scope.get('function')]
         function['input'] = []
         for el in scope.get('inputs'):
             function['input'].append({
-                                      'dataType': {'uri':el['data'],'term':uri2term(el['data'])},
-                                      'dataFormat' : [{'uri':format_el,'term':uri2term(el['data'])} for format_el in el['formats']]
+                                      'dataType': {'uri':check_id(el['data'],'data')},
+                                      'dataFormat' : [{'uri':check_id(format_el,'format')} for format_el in el['formats']]
                                      })
         function['output'] = []
         for el in scope.get('outputs'):
             function['output'].append({
-                                      'dataType': {'uri':el['data'],'term':uri2term(el['data'])},
-                                      'dataFormat' : [{'uri':format_el,'term':uri2term(el['data'])} for format_el in el['formats']]
+                                      'dataType': {'uri':check_id(el['data'],'data')},
+                                      'dataFormat' : [{'uri':check_id(format_el,'format')} for format_el in el['formats']]
                                      })
         resource['function'].append(function)
     return resource
  
-def auth(login):
-    password = getpass.getpass()
-    resp = requests.post('https://elixir-registry.cbs.dtu.dk/api/auth/login','{"username": "%s","password": "%s"}' % (login, password), headers={'Accept':'application/json', 'Content-type':'application/json'}).text
-    return json.loads(resp)['token']
 
 if __name__ == '__main__':
-    # 1. Import XML files from a Mobyle server or from a folder containing XML files
-    # 2. Convert to BTR XML
-    # 3. Convert to BTR JSON
-    # 4. Register to Elixir BTR
     parser = argparse.ArgumentParser(
                  description='ELIXIR registry tool for Debian Med packages')
-    group = parser.add_mutually_exclusive_group()
-    parser.add_argument('--package_dirs', help="Debian package directory", nargs='+')
-    parser.add_argument('--json_dir', help="target directory for JSON files")
-    parser.add_argument('--login', help="registry login")
+    parser.add_argument('package_dirs', help="Debian package directory", nargs='+')
     args = parser.parse_args()
     if args.package_dirs:
         package_dirs = args.package_dirs
-    params = {'mobyle_root':"'http://mobyle.pasteur.fr'",
-              'mobyle_contact':"'mobyle@pasteur.fr'"}
-    if args.login:
-        print "authenticating..."
-        token = auth(args.login)
-        print "authentication ok"
-        ok_cnt = 0
-        ko_cnt = 0
-        #print "attempting to delete all registered services..."
-        #resp = requests.delete('https://elixir-registry.cbs.dtu.dk/api/tool/%s' % args.login, headers={'Accept':'application/json', 'Content-type':'application/json', 'Authorization': 'Token %s' % token})
-        #print resp
     for package_dir in package_dirs:
-        print "processing %s..." % package_dirs
+        print "processing %s..." % package_dir
         res = doc_to_dict(package_dir)
         print json.dumps(res, indent=True)
-        resource_name = res['name']
-        if args.json_dir:
-            json_path = os.path.join(args.json_dir, resource_name + '.json')
-            json.dump(res, open(json_path, 'w'), indent=True)
-        if args.login and args:
-            resp = requests.post('https://elixir-registry.cbs.dtu.dk/api/tool', json.dumps(res), headers={'Accept':'application/json', 'Content-type':'application/json', 'Authorization': 'Token %s' % token})
-            #print resp.status_code
-            if resp.status_code==201:
-                print "%s ok" % resource_name
-                ok_cnt += 1
-            else:
-                print "%s ko, error: %s" % (resource_name, resp.text)
-                ko_cnt += 1
-    if args.login:
-        print "import finished, ok=%s, ko=%s" % (ok_cnt, ko_cnt)
+        print "done processing %s..." % package_dir
