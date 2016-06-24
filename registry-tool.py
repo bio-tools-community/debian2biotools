@@ -61,27 +61,19 @@ def doc_to_dict(pack_dir):
     resource['publications'] = {}
 
     try:
-        print "@@@@@@@@@@@@@@@"
-	print metadata['Reference']['DOI']
-        print "@@@@@@@@@@@@@@@"
         resource['publications']['publicationsPrimaryID'] = metadata['Reference']['DOI'],
-        print "@@@@@@@@@@@@@@@"
-        print resource['publications']['publicationsPrimaryID']
-        print "@@@@@@@@@@@@@@@"
     except TypeError:
         print "TypeError 1"
-        try:
-            resource['publications']['publicationsPrimaryID'] = metadata['Reference'][0]['DOI'],
-	    if len( metadata['Reference'])>1:
-                resource['publications']['publicationsOtherID'] = []
-                for pos in range(1,len(metadata['Reference'])):
-                    try:
-                        resource['publications']['publicationsOtherID'] = metadata['Reference'][pos]['DOI']
-                    except KeyError:
-                        print "No DOI at pos %d\n" % pos
-        except KeyError:
-            resource['publications']['publicationsPrimaryID'] = "None"
+        resource['publications']['publicationsPrimaryID'] = metadata['Reference'][0]['DOI'],
+	if len( metadata['Reference'])>1:
+            resource['publications']['publicationsOtherID'] = []
+            for pos in range(1,len(metadata['Reference'])):
+                try:
+                    resource['publications']['publicationsOtherID'] = metadata['Reference'][pos]['DOI']
+                except KeyError:
+                    print "No DOI at pos %d\n" % pos
     except KeyError:
+        # already done - assignment of none to publication
         resource['publications']['publicationsPrimaryID'] = "None"
 
     for scope in edam['scopes']:
