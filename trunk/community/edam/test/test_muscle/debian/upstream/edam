@@ -1,15 +1,16 @@
-topic: 
-  - topic_0182 #Sequence alignment
-scopes: 
+ontology: EDAM (1.12)
+topic:
+  - Sequence analysis
+scopes:
   - name: summary
-    function: 
-     - operation_0492 #Multiple Sequence Alignment
-    inputs: 
-     - data:   data_2044 #Sequence
-       formats: [format_1929] #FASTA
+    function:
+     - Multiple Sequence Alignment
+    inputs:
+     - data:   Sequence
+       formats: [FASTA]
     outputs:
-     - data: data_1916 #Alignment
-       formats: 
-       - format_1984 #FASTA-aln
-       - format_1982 #Clustalw format
-       - format_1997 #Phylip format
+     - data: Alignment
+       formats:
+       - FASTA-aln
+       - Clustalw format
+       - Phylip format
