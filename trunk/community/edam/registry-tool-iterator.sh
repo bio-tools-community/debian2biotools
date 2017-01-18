@@ -27,6 +27,15 @@ GITDIR=/home/moeller/git/debian-med
 JSONBUFFERDIR=/home/moeller/git/json-buffer
 JSONBUFFERSUBDIR=records
 
+if [ ! -r EDAM.owl ]; then
+	echo "I: Retrieving current version of EDAM ontology"
+	wget http://www.edamontology.org/EDAM.owl
+	exit
+fi
+edamversion=$(grep doap:Version EDAM.owl | cut -f2 -d\> | cut -f1 -d\<)
+echo "I: Comparing terms against EDAM version '$edamversion'"
+
+
 if [ ! -d "$GITDIR" ]; then
 	echo "E: Directory '$GITDIR' is not existing. Expected a whole range of git repositories from Debian Med here. Please check."
 	exit -1
