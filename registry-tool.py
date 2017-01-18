@@ -19,7 +19,8 @@ EDAM_NS = {'owl' : 'http://www.w3.org/2002/07/owl#',
 
 #EDAM_DOC = doc = etree.parse("/home/hmenager/edamontology/EDAM_1.13_dev.owl")
 #EDAM_DOC = doc = etree.parse("EDAM.owl")
-doc = etree.parse("/home/moeller/debian-med/community/edam/EDAM.owl")
+#doc = etree.parse("/home/moeller/debian-med/community/edam/EDAM.owl")
+doc = etree.parse("/home/kalas/edam/EDAM.owl")
 EDAM_DOC = doc.getroot()
 
 def check_id(label, axis):
