@@ -5,6 +5,11 @@ if [ ! -x /usr/bin/realpath ]; then
 	exit 1
 fi
 
+if [ ! -x /usr/bin/yamllint ]; then
+	echo "E: Please install yamllint"
+	exit 1
+fi
+
 DONTUPDATE=true
 #DONTUPDATE=false
 
@@ -22,15 +27,14 @@ set -e
 
 # And also:
 # filo 
-GITDIR=/home/moeller/git/debian-med
+GITDIR=$HOME/git/debian-med
 
-JSONBUFFERDIR=/home/moeller/git/json-buffer
+JSONBUFFERDIR=$HOME/git/json-buffer
 JSONBUFFERSUBDIR=records
 
 if [ ! -r EDAM.owl ]; then
 	echo "I: Retrieving current version of EDAM ontology"
 	wget http://www.edamontology.org/EDAM.owl
-	exit
 fi
 edamversion=$(grep doap:Version EDAM.owl | cut -f2 -d\> | cut -f1 -d\<)
 echo "I: Comparing terms against EDAM version '$edamversion'"
@@ -42,7 +46,9 @@ if [ ! -d "$GITDIR" ]; then
 fi
 
 if [ ! -d "$JSONBUFFERDIR" ]; then
-	echo "E: The diretory destined to hold the generated records is not existing. $JSONBUFFERDIR'" 
+	echo "E: The directory destined to hold the generated records is not existing."
+	echo "   Please consider running "
+        echo "      git clone https://github.com/bio-tools-community/json-buffer '$JSONBUFFERDIR'" 
 	exit -1
 fi
 
@@ -70,12 +76,6 @@ cat "$TOOLDIR/packages.list.txt" | while read p
 do
 	cd "$GITDIR"  # We may have moved into a subdir
 	echo -n "I: Preparing package '$p'"
-
-	if $DONTOVERWRITE && [ -r "$JSONBUFFERDIR"/"$JSONBUFFERSUBDIR"/"$p".json ] ; then
-		echo " not overwriting exiting '$JSONBUFFERDIR/$JSONBUFFERSUBDIR/$p.json'"
-		continue
-	fi
-
 	origin="https://anonscm.debian.org/git/debian-med/$p.git"
 	#origin="ssh://anonscm.debian.org/git/debian-med/$p.git"
 	if [ -d "$GITDIR"/"$p" ]; then
@@ -140,6 +140,14 @@ echo
 #for p in $EDAMPACKAGESINGIT
 cat "$TOOLDIR/packages.list.txt" | grep -v ^# | while read p
 do
+
+	dest="$JSONBUFFERDIR"/"$JSONBUFFERSUBDIR"/"$p".json
+
+	if $DONTOVERWRITE && [ -r "$dest" ] ; then
+		echo " not overwriting exiting '$dest'"
+		continue
+	fi
+
 	echo -n "I: Package '$p'"
 	if [ ! -d "$GITDIR"/"$p" ]; then
 		echo " not existing in '$GITDIR/$p' - skipped"
@@ -150,8 +158,7 @@ do
 		continue
 	fi
 
-	dest="$JSONBUFFERDIR"/"$JSONBUFFERSUBDIR"/"$p".json
-	echo -n " creating $dest"
+	echo -n " writing to $dest"
 	cd "$GITDIR"/"$p"
 	#git checkout master
 	python "$TOOLDIR"/registry-tool.py "$GITDIR"/"$p" > $dest
