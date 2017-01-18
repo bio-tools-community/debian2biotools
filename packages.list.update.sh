@@ -12,10 +12,10 @@ do
 	q=""
 	if echo $a|grep -q "Source: "; then
 		q=$(echo $a | sed -e '/^.*Source:/s/^.*Source: *//' -e 's/ *Version:.*//' -e 's/ *(.*) *//')
-		echo $p
+		echo $q
 	else
 		p=$(echo $a | sed -e '/Package/s/^Package: *//' -e 's/ *Version:.*//')
-		echo $q
+		echo $p
 	fi
 	# for debugging
 	#echo "p='$p'"
