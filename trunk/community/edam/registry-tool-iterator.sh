@@ -6,8 +6,13 @@ if [ ! -x /usr/bin/realpath ]; then
 fi
 
 DONTUPDATE=true
+#DONTUPDATE=false
+
 DONTOVERWRITE=true
+
+# Set to true if no new repositories shall be downloaded
 DONTCLONE=true
+#DONTCLONE=false
 
 TOOLDIR=$(realpath $(dirname $0))
 
@@ -46,56 +51,81 @@ if [ ! -r "$TOOLDIR/packages.list.txt" ]; then
 	exit 1
 fi
 
-if ! $DONTCLONE; then
-	#for p in $EDAMPACKAGESINGIT
-	cat "$TOOLDIR/packages.list.txt" | while read p
-	do
-		cd "$GITDIR"  # We may have moved into a subdir
-		echo -n "I: Preparing package '$p'"
 
-		if $DONTOVERWRITE && [ -r "$JSONBUFFERDIR"/"$JSONBUFFERSUBDIR"/"$p".json ] ; then
-			echo " not overwriting exiting '$JSONBUFFERDIR/$JSONBUFFERSUBDIR/$p.json'"
-			continue
-		fi
+echo
+echo "I: *** Retrieving package source tree from Debian Med git repository ***"
+echo
 
-		origin="https://anonscm.debian.org/git/debian-med/$p.git"
-		#origin="ssh://anonscm.debian.org/git/debian-med/$p.git"
-		if [ -d "$GITDIR"/"$p" ]; then
-			if $DONTUPDATE; then
-				echo " is existing, will not check for any later version"
-			else
-				echo " is existing, will pull latest version from Debian Med git repository '$origin'"
-				cd "$GITDIR"/"$p"
-				if ! git pull; then
-					echo
-					echo "E: Could not pull latest revision for '$p' from $origin - skipped"
-					continue
-				fi
-			fi
+#for p in $EDAMPACKAGESINGIT
+cat "$TOOLDIR/packages.list.txt" | while read p
+do
+	cd "$GITDIR"  # We may have moved into a subdir
+	echo -n "I: Preparing package '$p'"
+
+	if $DONTOVERWRITE && [ -r "$JSONBUFFERDIR"/"$JSONBUFFERSUBDIR"/"$p".json ] ; then
+		echo " not overwriting exiting '$JSONBUFFERDIR/$JSONBUFFERSUBDIR/$p.json'"
+		continue
+	fi
+
+	origin="https://anonscm.debian.org/git/debian-med/$p.git"
+	#origin="ssh://anonscm.debian.org/git/debian-med/$p.git"
+	if [ -d "$GITDIR"/"$p" ]; then
+		if $DONTUPDATE; then
+			echo " is existing, will not check for any later version"
 		else
-			echo " is not existing, will clone from Debian Med git repository '$origin'"
+			echo " is existing, will pull latest version from Debian Med git repository '$origin'"
+			cd "$GITDIR"/"$p"
+			if ! git pull; then
+				echo
+				echo "W: Could not pull latest revision for '$p' from $origin - skipped, git status shown below"
+				git status
+				continue
+			fi
+			if ! git gc; then
+				echo
+				echo "E: Could not garbage-collect package '$p' - fix this"
+				exit 1
+			fi
+		fi
+	else
+		echo -n " is not existing "
+		if $DONTCLONE; then
+			echo " [skipped]"
+			continue
+		else
+			echo -n ", will clone from Debian Med git repository '$origin'"
 			if ! git clone --quiet --branch=master --single-branch $origin; then
 				echo
 				echo "E: Could not clone package '$p' from $origin - skipped"
 				continue
 			fi
+			cd $p
+			if ! git gc; then
+				echo
+				echo "E: Could not garbage-collect freshly cloned package '$p' - fix this"
+				exit 1
+			fi
 		fi
+	fi
 
-		cd "$GITDIR"/"$p"
-		git checkout master
+	cd "$GITDIR"/"$p"
+	git checkout master
 
-		if [ ! -r debian/upstream/edam ]; then
-			echo "W: The package '$p' suprisingly does not feature an EDAM annotation file"
-			continue
-		fi
+	if [ ! -r debian/upstream/edam ]; then
+		echo "W: The package '$p' suprisingly does not feature an EDAM annotation file"
+		continue
+	fi
 
-		if ! yamllint debian/upstream/edam; then
-			echo
-			echo "E: The package '$p' has a problem with its EDAM annotation. Please fix."
-			exit 1
-		fi
-	done
-fi
+	if ! yamllint debian/upstream/edam; then
+		echo
+		echo "E: The package '$p' has a syntactic problem with its EDAM annotation. Please fix."
+		exit 1
+	fi
+done
+
+echo
+echo "I: *** Repository of Debian Med packages is in shape, now transcribing for bio.tools  ***"
+echo
 
 
 #for p in $EDAMPACKAGESINGIT
