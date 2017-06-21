@@ -1,4 +1,4 @@
-= Export of Debian annotation to the bio.tools repository =
+# Export of Debian annotation to the bio.tools repository
 
 This folder collects tools to automated the transformation of Debian
 package annotation in the a syntax of the ELIXIR registry 'bio.tools' [3].
@@ -16,7 +16,7 @@ regular packaging. Since package annotation is immediately amendable
 via the git repository of Debian Med [4], this shall also invite
 Debian-external contributors.
 
-== Tools ==
+## Tools
 
 The following tools are available
  * packages.list.update.sh
@@ -39,7 +39,7 @@ out the master branch of each such referenced package. The iterator
 checks the format of each EDAM file and in a second iteration creates
 the json files mean to export from Debian to the bio.tools repository.
 
-== Data flow ==
+## Data flow
 
 While the upload of packages is at ease for packages that are yet unknown
 to the  bio.tools registry, the information for entries already existing
@@ -51,8 +51,8 @@ the registry-tool are submitted.  The information in bio.tools placed
 in an independent branch. A third branch merges the two to prepare
 the submission.
 
-Steffen Moeller, Matus Kalas
-St. Malo/Bergen/Rostock/Lyngby/Trondheim/Luebeck/Bucharest 2015-2017
+Steffen Möller, Matúš Kalaš, Hervé Ménager
+St. Malo/Lyngby/Trondheim/Niendorf(2x)/Bucharest 2015-2017
 
 [1] http://edamontology.org/
 [2] http://www.yaml.org/
